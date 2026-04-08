@@ -66,18 +66,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 4. Force video playback on restrictive mobile browsers
+  // 4. Force video playback explicitly for Safari/Vercel quirks
   const videos = document.querySelectorAll('video');
   videos.forEach(video => {
+    video.defaultMuted = true;
     video.muted = true;
-    video.setAttribute('playsinline', 'playsinline');
-    video.play().catch(e => {
-        console.warn("Mobile autoplay restriction hit:", e);
-        // Fallback: Attempt play on first user interaction if blocked by Low Power Mode
-        document.body.addEventListener('touchstart', () => {
-            video.play();
-        }, { once: true });
-    });
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    
+    const playAttempt = () => {
+        video.play().catch(e => {
+            console.log("Mobile autoplay prevented. Waiting for interaction...", e);
+            // Fallback: the moment they touch the screen or scroll even 1 pixel, it forces play.
+            const forcePlay = () => {
+                video.play();
+                ['click', 'touchstart', 'scroll'].forEach(evt => document.removeEventListener(evt, forcePlay));
+            };
+            ['click', 'touchstart', 'scroll'].forEach(evt => document.addEventListener(evt, forcePlay, {passive: true}));
+        });
+    };
+    
+    playAttempt();
   });
 
 });
