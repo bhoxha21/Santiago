@@ -66,6 +66,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // 4. Force video playback on restrictive mobile browsers
+  const videos = document.querySelectorAll('video');
+  videos.forEach(video => {
+    video.muted = true;
+    video.setAttribute('playsinline', 'playsinline');
+    video.play().catch(e => {
+        console.warn("Mobile autoplay restriction hit:", e);
+        // Fallback: Attempt play on first user interaction if blocked by Low Power Mode
+        document.body.addEventListener('touchstart', () => {
+            video.play();
+        }, { once: true });
+    });
+  });
+
 });
 
 // Lightbox Logic
